@@ -3,14 +3,11 @@ export interface WhiteLabelInterface {
   primaryColor: string;
 }
 
-export interface TenantInputInterface {
+export interface TenantInterface {
+  id: string;
   name: string;
   slg: string;
   whiteLabel: WhiteLabelInterface;
-}
-
-export interface TenantInterface extends TenantInputInterface {
-  id: string;
   createdAt: string;
   updatedAt: string;
 }

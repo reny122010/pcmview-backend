@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { TenantDocument, TENANT_MODEL_NAME } from './tenant.schema';
 import { CreateTenantDto } from './dto/create-tenant.dto';
+import { stripMongooseProps } from '../common/utils/mongoose-utils';
 
 @Injectable()
 export class TenantRepository {
@@ -15,35 +16,17 @@ export class TenantRepository {
   ) {}
 
   async create(data: CreateTenantDto): Promise<TenantInterface> {
-    const docToInsert = { ...data };
+    const existing = await this.tenantModel
+      .findOne({ slg: data.slg })
+      .lean()
+      .exec();
+    if (existing) throw new BadRequestException(['slg already exists']);
 
-    try {
-      // verificação simples e rápida antes do insert
-      const existing = await this.tenantModel
-        .findOne({ slg: data.slg })
-        .lean()
-        .exec();
-      if (existing) {
-        throw new BadRequestException(['slg already exists']);
-      }
+    const plain = (await this.tenantModel.create(data)).toObject({
+      virtuals: true,
+    }) as unknown as TenantInterface;
 
-      const created = await new this.tenantModel(docToInsert).save();
-      return created as unknown as TenantInterface;
-    } catch (err: unknown) {
-      if (
-        err &&
-        typeof err === 'object' &&
-        'code' in err &&
-        (err as { code?: number }).code === 11000
-      ) {
-        this.logger.warn(
-          'Duplicate key error when creating tenant',
-          err as any,
-        );
-        throw new BadRequestException(['slg already exists']);
-      }
-
-      throw err;
-    }
+    stripMongooseProps(plain as any);
+    return plain;
   }
 }

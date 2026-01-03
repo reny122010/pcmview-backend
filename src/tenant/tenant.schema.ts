@@ -18,7 +18,6 @@ export class Tenant {
   @Prop({ required: true })
   name: string;
 
-  // marca slg como unique (índice) para evitar duplicatas no banco
   @Prop({ required: true, unique: true })
   slg: string;
 
@@ -28,7 +27,6 @@ export class Tenant {
 
 export const TenantSchema = SchemaFactory.createForClass(Tenant);
 
-// garante criação do índice único também explicitamente
 TenantSchema.index({ slg: 1 }, { unique: true });
 
 export const TENANT_MODEL_NAME = 'Tenant';
