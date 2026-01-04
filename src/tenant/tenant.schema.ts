@@ -29,6 +29,9 @@ export class Tenant {
 
   @Prop({ type: Number, required: true, default: 0 })
   maxShutdowns: number;
+
+  @Prop({ type: Boolean, required: true, default: false })
+  active: boolean;
 }
 
 export const TenantSchema = SchemaFactory.createForClass(Tenant);

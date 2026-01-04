@@ -3,6 +3,7 @@ import { TenantRepository } from './tenant.repository';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { SetPlanLimitsDto } from './dto/set-plan-limits.dto';
+import { ToggleTenantActiveDto } from './dto/toggle-tenant-active.dto';
 import { TenantInterface } from '../common/interfaces/tenant.interface';
 
 @Injectable()
@@ -27,5 +28,12 @@ export class TenantService {
     limits: SetPlanLimitsDto,
   ): Promise<TenantInterface> {
     return this.tenantRepository.setPlanLimits(id, limits);
+  }
+
+  async toggleTenantActive(
+    id: string,
+    payload: ToggleTenantActiveDto,
+  ): Promise<TenantInterface> {
+    return this.tenantRepository.toggleActive(id, payload);
   }
 }

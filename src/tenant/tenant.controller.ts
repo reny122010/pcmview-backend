@@ -11,6 +11,7 @@ import { TenantService } from './tenant.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { SetPlanLimitsDto } from './dto/set-plan-limits.dto';
+import { ToggleTenantActiveDto } from './dto/toggle-tenant-active.dto';
 import { TenantInterface } from '../common/interfaces/tenant.interface';
 
 @Controller('tenant')
@@ -41,5 +42,14 @@ export class TenantController {
     @Body() limits: SetPlanLimitsDto,
   ): Promise<TenantInterface> {
     return this.tenantService.setPlanLimits(id, limits);
+  }
+
+  @Patch('toggle-active/:id')
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  async toggleTenantActive(
+    @Param('id') id: string,
+    @Body() payload: ToggleTenantActiveDto,
+  ): Promise<TenantInterface> {
+    return this.tenantService.toggleTenantActive(id, payload);
   }
 }
