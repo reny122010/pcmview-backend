@@ -4,6 +4,8 @@ import {
   Post,
   Patch,
   Param,
+  Get,
+  Query,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -51,5 +53,28 @@ export class TenantController {
     @Body() payload: ToggleTenantActiveDto,
   ): Promise<TenantInterface> {
     return this.tenantService.toggleTenantActive(id, payload);
+  }
+
+  @Get('list')
+  async listTenants(
+    @Query('page') page = '1',
+    @Query('limit') limit = '10',
+    @Query('name') name?: string,
+    @Query('slg') slg?: string,
+  ): Promise<{
+    data: TenantInterface[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const limitNum = Math.max(parseInt(limit, 10) || 10, 1);
+
+    return this.tenantService.listTenants(pageNum, limitNum, { name, slg });
+  }
+
+  @Get(':id')
+  async getTenantById(@Param('id') id: string): Promise<TenantInterface> {
+    return this.tenantService.getTenantById(id);
   }
 }

@@ -37,5 +37,7 @@ export class Tenant {
 export const TenantSchema = SchemaFactory.createForClass(Tenant);
 
 TenantSchema.index({ slg: 1 }, { unique: true });
+TenantSchema.index({ name: 1 });
+TenantSchema.index({ createdAt: -1 });
 
 export const TENANT_MODEL_NAME = 'Tenant';

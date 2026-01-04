@@ -36,4 +36,21 @@ export class TenantService {
   ): Promise<TenantInterface> {
     return this.tenantRepository.toggleActive(id, payload);
   }
+
+  async listTenants(
+    page: number,
+    limit: number,
+    filters: { name?: string; slg?: string },
+  ): Promise<{
+    data: TenantInterface[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    return this.tenantRepository.findAllPaged(page, limit, filters);
+  }
+
+  async getTenantById(id: string): Promise<TenantInterface> {
+    return this.tenantRepository.findById(id);
+  }
 }

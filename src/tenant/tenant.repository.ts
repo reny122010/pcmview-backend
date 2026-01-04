@@ -95,4 +95,61 @@ export class TenantRepository {
     stripMongooseProps(plain as any);
     return plain;
   }
+
+  async findAllPaged(
+    page: number,
+    limit: number,
+    filters: { name?: string; slg?: string },
+  ): Promise<{
+    data: TenantInterface[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const query: Record<string, any> = {};
+
+    if (filters.name) {
+      query.name = { $regex: filters.name, $options: 'i' };
+    }
+
+    if (filters.slg) {
+      query.slg = { $regex: filters.slg, $options: 'i' };
+    }
+
+    const [items, total] = await Promise.all([
+      this.tenantModel
+        .find(query)
+        .select('name slg maxUsers maxShutdowns active createdAt updatedAt')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+        .exec(),
+      this.tenantModel.countDocuments(query).exec(),
+    ]);
+
+    const plain = items.map((i) => {
+      const t = i as unknown as TenantInterface;
+      stripMongooseProps(t as any);
+      return t;
+    });
+
+    return { data: plain, total, page, limit };
+  }
+
+  async findById(id: string): Promise<TenantInterface> {
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException(['invalid tenant id']);
+    }
+
+    const existing = await this.tenantModel.findById(id).lean().exec();
+
+    if (!existing) {
+      throw new BadRequestException(['tenant not found']);
+    }
+
+    const plain = existing as unknown as TenantInterface;
+    stripMongooseProps(plain as any);
+    return plain;
+  }
 }
