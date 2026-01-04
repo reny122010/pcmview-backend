@@ -4,8 +4,11 @@ import {
   Post,
   Patch,
   Param,
+  Get,
+  Query,
   UsePipes,
   ValidationPipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -39,5 +42,30 @@ export class UserController {
     @Body() input: ToggleUserActiveDto,
   ): Promise<UserInterface> {
     return this.userService.toggleUserActive(id, input);
+  }
+
+  @Get('list/:tenantId')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async listUsersByTenant(
+    @Param('tenantId') tenantId: string,
+    @Query('page', ParseIntPipe) page = 1,
+    @Query('limit', ParseIntPipe) limit = 10,
+    @Query('fullName') fullName?: string,
+    @Query('email') email?: string,
+  ): Promise<{
+    data: UserInterface[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    return this.userService.listUsersByTenant(tenantId, page, limit, {
+      fullName,
+      email,
+    });
+  }
+
+  @Get(':id')
+  async getUserById(@Param('id') id: string): Promise<UserInterface> {
+    return this.userService.getUserById(id);
   }
 }

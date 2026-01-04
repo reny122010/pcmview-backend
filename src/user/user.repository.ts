@@ -168,4 +168,104 @@ export class UserRepository {
     stripMongooseProps(user as any);
     return user;
   }
+
+  async findAllByTenantPaged(
+    tenantId: string,
+    page: number,
+    limit: number,
+    filters: { fullName?: string; email?: string },
+  ): Promise<{
+    data: UserInterface[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    if (!isValidObjectId(tenantId)) {
+      throw new BadRequestException(['invalid tenant id']);
+    }
+
+    const query: Record<string, any> = { tenantId };
+
+    if (filters.fullName) {
+      query.fullName = { $regex: filters.fullName, $options: 'i' };
+    }
+
+    if (filters.email) {
+      query.email = { $regex: filters.email, $options: 'i' };
+    }
+
+    const [items, total] = await Promise.all([
+      this.userModel
+        .find(query)
+        .select('id tenantId fullName email active createdAt updatedAt')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+        .exec(),
+      this.userModel.countDocuments(query).exec(),
+    ]);
+
+    const data: UserInterface[] = items.map((doc) => {
+      const plain = doc as unknown as {
+        id: string;
+        tenantId: { toString(): string };
+        fullName: string;
+        email: string;
+        active: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+      };
+
+      const user: UserInterface = {
+        id: plain.id,
+        tenantId: plain.tenantId.toString(),
+        fullName: plain.fullName,
+        email: plain.email,
+        active: plain.active,
+        createdAt: plain.createdAt.toISOString(),
+        updatedAt: plain.updatedAt.toISOString(),
+      };
+
+      stripMongooseProps(user as any);
+      return user;
+    });
+
+    return { data, total, page, limit };
+  }
+
+  async findById(id: string): Promise<UserInterface> {
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException(['invalid user id']);
+    }
+
+    const existing = await this.userModel.findById(id).lean().exec();
+
+    if (!existing) {
+      throw new BadRequestException(['user not found']);
+    }
+
+    const plain = existing as unknown as {
+      id: string;
+      tenantId: { toString(): string };
+      fullName: string;
+      email: string;
+      active: boolean;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+
+    const user: UserInterface = {
+      id: plain.id,
+      tenantId: plain.tenantId.toString(),
+      fullName: plain.fullName,
+      email: plain.email,
+      active: plain.active,
+      createdAt: plain.createdAt.toISOString(),
+      updatedAt: plain.updatedAt.toISOString(),
+    };
+
+    stripMongooseProps(user as any);
+    return user;
+  }
 }

@@ -23,4 +23,27 @@ export class UserService {
   ): Promise<UserInterface> {
     return this.userRepository.toggleActive(id, input);
   }
+
+  async listUsersByTenant(
+    tenantId: string,
+    page: number,
+    limit: number,
+    filters: { fullName?: string; email?: string },
+  ): Promise<{
+    data: UserInterface[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    return this.userRepository.findAllByTenantPaged(
+      tenantId,
+      page,
+      limit,
+      filters,
+    );
+  }
+
+  async getUserById(id: string): Promise<UserInterface> {
+    return this.userRepository.findById(id);
+  }
 }

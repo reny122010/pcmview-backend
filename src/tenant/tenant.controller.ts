@@ -8,6 +8,7 @@ import {
   Query,
   UsePipes,
   ValidationPipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { TenantService } from './tenant.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
@@ -57,8 +58,8 @@ export class TenantController {
 
   @Get('list')
   async listTenants(
-    @Query('page') page = '1',
-    @Query('limit') limit = '10',
+    @Query('page', ParseIntPipe) page = 1,
+    @Query('limit', ParseIntPipe) limit = 10,
     @Query('name') name?: string,
     @Query('slg') slg?: string,
   ): Promise<{
@@ -67,10 +68,7 @@ export class TenantController {
     page: number;
     limit: number;
   }> {
-    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
-    const limitNum = Math.max(parseInt(limit, 10) || 10, 1);
-
-    return this.tenantService.listTenants(pageNum, limitNum, { name, slg });
+    return this.tenantService.listTenants(page, limit, { name, slg });
   }
 
   @Get(':id')
