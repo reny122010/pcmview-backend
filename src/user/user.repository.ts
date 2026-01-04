@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, isValidObjectId } from 'mongoose';
 import { USER_MODEL_NAME, UserDocument } from './user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { UserInterface } from '../common/interfaces/user.interface';
 import { stripMongooseProps } from '../common/utils/mongoose-utils';
 import * as bcrypt from 'bcryptjs';
@@ -41,11 +42,8 @@ export class UserRepository {
 
     let created!: UserDocument;
     try {
-      const salt: string = (await bcrypt.genSalt(10)) as string;
-      const passwordHash: string = (await bcrypt.hash(
-        data.password,
-        salt,
-      )) as string;
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(data.password, salt);
 
       created = await this.userModel.create({
         tenantId: data.tenantId,
@@ -73,6 +71,53 @@ export class UserRepository {
       createdAt: plain.createdAt.toISOString(),
       updatedAt: plain.updatedAt.toISOString(),
     } as UserInterface;
+
+    stripMongooseProps(user as any);
+    return user;
+  }
+
+  async update(id: string, data: UpdateUserDto): Promise<UserInterface> {
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException(['invalid user id']);
+    }
+
+    const existingEmail = data.email
+      ? await this.userModel
+          .findOne({ _id: { $ne: id }, email: data.email })
+          .lean()
+          .exec()
+      : null;
+
+    if (existingEmail) {
+      throw new BadRequestException(['email already in use']);
+    }
+
+    const updated = await this.userModel
+      .findByIdAndUpdate(id, data, { new: true })
+      .lean()
+      .exec();
+
+    if (!updated) {
+      throw new BadRequestException(['user not found']);
+    }
+
+    const plain = updated as unknown as {
+      id: string;
+      tenantId: { toString(): string };
+      fullName: string;
+      email: string;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+
+    const user: UserInterface = {
+      id: plain.id,
+      tenantId: plain.tenantId.toString(),
+      fullName: plain.fullName,
+      email: plain.email,
+      createdAt: plain.createdAt.toISOString(),
+      updatedAt: plain.updatedAt.toISOString(),
+    };
 
     stripMongooseProps(user as any);
     return user;
