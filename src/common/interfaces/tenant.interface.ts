@@ -8,6 +8,8 @@ export interface TenantInterface {
   name: string;
   slg: string;
   whiteLabel: WhiteLabelInterface;
+  maxUsers: number;
+  maxShutdowns: number;
   createdAt: string;
   updatedAt: string;
 }

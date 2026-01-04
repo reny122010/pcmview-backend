@@ -23,6 +23,12 @@ export class Tenant {
 
   @Prop({ type: WhiteLabelSchema, required: false })
   whiteLabel?: WhiteLabel;
+
+  @Prop({ type: Number, required: true, default: 0 })
+  maxUsers: number;
+
+  @Prop({ type: Number, required: true, default: 0 })
+  maxShutdowns: number;
 }
 
 export const TenantSchema = SchemaFactory.createForClass(Tenant);
