@@ -10,6 +10,7 @@ import {
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ToggleUserActiveDto } from './dto/toggle-user-disabled.dto';
 import { UserInterface } from '../common/interfaces/user.interface';
 
 @Controller('user')
@@ -29,5 +30,14 @@ export class UserController {
     @Body() input: UpdateUserDto,
   ): Promise<UserInterface> {
     return this.userService.updateUser(id, input);
+  }
+
+  @Patch('toggle-active/:id')
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  async toggleUserActive(
+    @Param('id') id: string,
+    @Body() input: ToggleUserActiveDto,
+  ): Promise<UserInterface> {
+    return this.userService.toggleUserActive(id, input);
   }
 }

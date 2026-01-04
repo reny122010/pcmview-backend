@@ -4,6 +4,7 @@ import { Model, isValidObjectId } from 'mongoose';
 import { USER_MODEL_NAME, UserDocument } from './user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ToggleUserActiveDto } from './dto/toggle-user-disabled.dto';
 import { UserInterface } from '../common/interfaces/user.interface';
 import { stripMongooseProps } from '../common/utils/mongoose-utils';
 import * as bcrypt from 'bcryptjs';
@@ -60,6 +61,7 @@ export class UserRepository {
       tenantId: { toString(): string };
       fullName: string;
       email: string;
+      active: boolean;
       createdAt: Date;
       updatedAt: Date;
     };
@@ -68,6 +70,7 @@ export class UserRepository {
       tenantId: plain.tenantId.toString(),
       fullName: plain.fullName,
       email: plain.email,
+      active: plain.active,
       createdAt: plain.createdAt.toISOString(),
       updatedAt: plain.updatedAt.toISOString(),
     } as UserInterface;
@@ -106,6 +109,7 @@ export class UserRepository {
       tenantId: { toString(): string };
       fullName: string;
       email: string;
+      active: boolean;
       createdAt: Date;
       updatedAt: Date;
     };
@@ -115,6 +119,48 @@ export class UserRepository {
       tenantId: plain.tenantId.toString(),
       fullName: plain.fullName,
       email: plain.email,
+      active: plain.active,
+      createdAt: plain.createdAt.toISOString(),
+      updatedAt: plain.updatedAt.toISOString(),
+    };
+
+    stripMongooseProps(user as any);
+    return user;
+  }
+
+  async toggleActive(
+    id: string,
+    payload: ToggleUserActiveDto,
+  ): Promise<UserInterface> {
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException(['invalid user id']);
+    }
+
+    const updated = await this.userModel
+      .findByIdAndUpdate(id, { active: payload.active }, { new: true })
+      .lean()
+      .exec();
+
+    if (!updated) {
+      throw new BadRequestException(['user not found']);
+    }
+
+    const plain = updated as unknown as {
+      id: string;
+      tenantId: { toString(): string };
+      fullName: string;
+      email: string;
+      active: boolean;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+
+    const user: UserInterface = {
+      id: plain.id,
+      tenantId: plain.tenantId.toString(),
+      fullName: plain.fullName,
+      email: plain.email,
+      active: plain.active,
       createdAt: plain.createdAt.toISOString(),
       updatedAt: plain.updatedAt.toISOString(),
     };

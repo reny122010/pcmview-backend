@@ -3,6 +3,7 @@ export interface UserInterface {
   tenantId: string;
   fullName: string;
   email: string;
+  active: boolean;
   createdAt: string;
   updatedAt: string;
 }
