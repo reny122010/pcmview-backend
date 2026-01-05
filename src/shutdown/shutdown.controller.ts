@@ -4,6 +4,8 @@ import {
   Post,
   Patch,
   Param,
+  Get,
+  Query,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -31,5 +33,34 @@ export class ShutdownController {
     @Body() input: SetShutdownStatusDto,
   ): Promise<ShutdownInterface> {
     return this.shutdownService.setShutdownStatus(id, input);
+  }
+
+  @Get('list/:tenantId')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async listShutdownsByTenant(
+    @Param('tenantId') tenantId: string,
+    @Query('page') page = '1',
+    @Query('limit') limit = '10',
+    @Query('name') name?: string,
+  ): Promise<{
+    data: ShutdownInterface[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const limitNum = Math.max(parseInt(limit, 10) || 10, 1);
+
+    return this.shutdownService.listShutdownsByTenant(
+      tenantId,
+      pageNum,
+      limitNum,
+      { name },
+    );
+  }
+
+  @Get(':id')
+  async getShutdownById(@Param('id') id: string): Promise<ShutdownInterface> {
+    return this.shutdownService.getShutdownById(id);
   }
 }

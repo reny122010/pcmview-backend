@@ -18,4 +18,27 @@ export class ShutdownService {
   ): Promise<ShutdownInterface> {
     return this.shutdownRepository.setStatus(id, input);
   }
+
+  async listShutdownsByTenant(
+    tenantId: string,
+    page: number,
+    limit: number,
+    filters: { name?: string },
+  ): Promise<{
+    data: ShutdownInterface[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    return this.shutdownRepository.findAllByTenantPaged(
+      tenantId,
+      page,
+      limit,
+      filters,
+    );
+  }
+
+  async getShutdownById(id: string): Promise<ShutdownInterface> {
+    return this.shutdownRepository.findById(id);
+  }
 }

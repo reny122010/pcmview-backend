@@ -123,4 +123,110 @@ export class ShutdownRepository {
     stripMongooseProps(shutdown as any);
     return shutdown;
   }
+
+  async findAllByTenantPaged(
+    tenantId: string,
+    page: number,
+    limit: number,
+    filters: { name?: string },
+  ): Promise<{
+    data: ShutdownInterface[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    if (!isValidObjectId(tenantId)) {
+      throw new BadRequestException(['invalid tenant id']);
+    }
+
+    const query: Record<string, unknown> = { tenantId };
+
+    if (filters.name) {
+      query.name = { $regex: filters.name, $options: 'i' };
+    }
+
+    const [items, total] = await Promise.all([
+      this.shutdownModel
+        .find(query)
+        .select(
+          'id tenantId name description startDate endDate status createdAt updatedAt',
+        )
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+        .exec(),
+      this.shutdownModel.countDocuments(query).exec(),
+    ]);
+
+    const data: ShutdownInterface[] = items.map((doc) => {
+      const plain = doc as unknown as {
+        _id: string;
+        tenantId: { toString(): string };
+        name: string;
+        description?: string;
+        startDate?: Date | null;
+        endDate?: Date | null;
+        status: 'open' | 'closed' | 'started' | 'paused' | 'finished';
+        createdAt: Date;
+        updatedAt: Date;
+      };
+
+      const shutdown: ShutdownInterface = {
+        id: plain._id,
+        tenantId: plain.tenantId.toString(),
+        name: plain.name,
+        description: plain.description,
+        startDate: plain.startDate ? plain.startDate.toISOString() : null,
+        endDate: plain.endDate ? plain.endDate.toISOString() : null,
+        status: plain.status,
+        createdAt: plain.createdAt.toISOString(),
+        updatedAt: plain.updatedAt.toISOString(),
+      };
+
+      stripMongooseProps(shutdown as any);
+      return shutdown;
+    });
+
+    return { data, total, page, limit };
+  }
+
+  async findById(id: string): Promise<ShutdownInterface> {
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException(['invalid shutdown id']);
+    }
+
+    const existing = await this.shutdownModel.findById(id).lean().exec();
+
+    if (!existing) {
+      throw new BadRequestException(['shutdown not found']);
+    }
+
+    const plain = existing as unknown as {
+      id: string;
+      tenantId: { toString(): string };
+      name: string;
+      description?: string;
+      startDate?: Date | null;
+      endDate?: Date | null;
+      status: 'open' | 'closed' | 'started' | 'paused' | 'finished';
+      createdAt: Date;
+      updatedAt: Date;
+    };
+
+    const shutdown: ShutdownInterface = {
+      id: plain.id,
+      tenantId: plain.tenantId.toString(),
+      name: plain.name,
+      description: plain.description,
+      startDate: plain.startDate ? plain.startDate.toISOString() : null,
+      endDate: plain.endDate ? plain.endDate.toISOString() : null,
+      status: plain.status,
+      createdAt: plain.createdAt.toISOString(),
+      updatedAt: plain.updatedAt.toISOString(),
+    };
+
+    stripMongooseProps(shutdown as any);
+    return shutdown;
+  }
 }
