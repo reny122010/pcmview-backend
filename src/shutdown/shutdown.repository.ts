@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, isValidObjectId } from 'mongoose';
 import { SHUTDOWN_MODEL_NAME, ShutdownDocument } from './shutdown.schema';
 import { CreateShutdownDto } from './dto/create-shutdown.dto';
+import { SetShutdownStatusDto } from './dto/set-shutdown-status.dto';
 import { ShutdownInterface } from '../common/interfaces/shutdown.interface';
 import { stripMongooseProps } from '../common/utils/mongoose-utils';
 import { TENANT_MODEL_NAME, TenantDocument } from '../tenant/tenant.schema';
@@ -57,6 +58,7 @@ export class ShutdownRepository {
       description?: string;
       startDate?: Date | null;
       endDate?: Date | null;
+      status: 'open' | 'closed' | 'started' | 'paused' | 'finished';
       createdAt: Date;
       updatedAt: Date;
     };
@@ -68,6 +70,52 @@ export class ShutdownRepository {
       description: plain.description,
       startDate: plain.startDate ? plain.startDate.toISOString() : null,
       endDate: plain.endDate ? plain.endDate.toISOString() : null,
+      status: plain.status,
+      createdAt: plain.createdAt.toISOString(),
+      updatedAt: plain.updatedAt.toISOString(),
+    };
+
+    stripMongooseProps(shutdown as any);
+    return shutdown;
+  }
+
+  async setStatus(
+    id: string,
+    payload: SetShutdownStatusDto,
+  ): Promise<ShutdownInterface> {
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException(['invalid shutdown id']);
+    }
+
+    const updated = await this.shutdownModel
+      .findByIdAndUpdate(id, { status: payload.status }, { new: true })
+      .lean()
+      .exec();
+
+    if (!updated) {
+      throw new BadRequestException(['shutdown not found']);
+    }
+
+    const plain = updated as unknown as {
+      _id: string;
+      tenantId: { toString(): string };
+      name: string;
+      description?: string;
+      startDate?: Date | null;
+      endDate?: Date | null;
+      status: 'open' | 'closed' | 'started' | 'paused' | 'finished';
+      createdAt: Date;
+      updatedAt: Date;
+    };
+
+    const shutdown: ShutdownInterface = {
+      id: plain._id,
+      tenantId: plain.tenantId.toString(),
+      name: plain.name,
+      description: plain.description,
+      startDate: plain.startDate ? plain.startDate.toISOString() : null,
+      endDate: plain.endDate ? plain.endDate.toISOString() : null,
+      status: plain.status,
       createdAt: plain.createdAt.toISOString(),
       updatedAt: plain.updatedAt.toISOString(),
     };

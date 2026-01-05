@@ -19,6 +19,14 @@ export class Shutdown {
 
   @Prop({ required: false })
   endDate?: Date;
+
+  @Prop({
+    type: String,
+    required: true,
+    enum: ['open', 'closed', 'started', 'paused', 'finished'],
+    default: 'open',
+  })
+  status: string;
 }
 
 export const ShutdownSchema = SchemaFactory.createForClass(Shutdown);
